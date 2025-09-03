@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-chart-bar text-primary"></i> Reports & Analytics
+        </h1>
+        <p class="text-muted">Comprehensive business insights and analytics</p>
+    </div>
+    <div>
+        <button class="btn btn-outline-primary" onclick="exportReport()">
+            <i class="fas fa-download"></i> Export Report
+        </button>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filter
+                </button>
+            </div>
+            <div class="col-md-3">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">Week</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">Month</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sales Summary -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-number">{{ report.summary.total_sales or 0 }}</div>
+            <div class="stat-label">Total Sales</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-number">{{ report.summary.total_revenue|currency }}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-number">{{ report.summary.avg_sale_amount|currency }}</div>
+            <div class="stat-label">Average Sale</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger">
+            <div class="stat-icon">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="stat-number">{{ report.summary.total_discounts|currency }}</div>
+            <div class="stat-label">Total Discounts</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sales Trend Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-area"></i> Sales Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesTrendChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-trophy"></i> Top Products
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if report.top_products %}
+                    {% for product in report.top_products[:5] %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="mb-0">{{ product[0] }}</h6>
+                                <small class="text-muted">{{ product[1] }} units</small>
+                            </div>
+                            <strong class="text-success">{{ product[2]|currency }}</strong>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">No sales data for selected period</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alert -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Low Stock Alert
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Current Stock</th>
+                                    <th>Minimum Stock</th>
+                                    <th>Reorder Point</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in low_stock_products %}
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <h6 class="mb-0">{{ product.name }}</h6>
+                                                <small class="text-muted">{{ product.sku }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if product.current_stock == 0 else 'warning' }}">
+                                                {{ product.current_stock }}
+                                            </span>
+                                        </td>
+                                        <td>{{ product.minimum_stock }}</td>
+                                        <td>{{ product.reorder_point }}</td>
+                                        <td>
+                                            {% if product.current_stock == 0 %}
+                                                <span class="badge bg-danger">Out of Stock</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Low Stock</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="reorderProduct({{ product.id }})">
+                                                <i class="fas fa-shopping-cart"></i> Reorder
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <h5 class="text-success">All Stock Levels Good!</h5>
+                        <p class="text-muted">No products are currently low on stock</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools"></i> Report Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <button class="btn btn-info w-100" onclick="generateInventoryReport()">
+                            <i class="fas fa-boxes mb-2"></i><br>
+                            Inventory Report
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" onclick="generateSalesReport()">
+                            <i class="fas fa-chart-line mb-2"></i><br>
+                            Sales Report
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" onclick="generateProfitReport()">
+                            <i class="fas fa-dollar-sign mb-2"></i><br>
+                            Profit Analysis
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="scheduleReport()">
+                            <i class="fas fa-clock mb-2"></i><br>
+                            Schedule Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let salesTrendChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSalesTrendChart();
+    });
+    
+    function initializeSalesTrendChart() {
+        const ctx = document.getElementById('salesTrendChart').getContext('2d');
+        
+        const dailySalesData = {{ report.daily_sales | tojson }};
+        const labels = dailySalesData.map(sale => sale[0]);
+        const revenues = dailySalesData.map(sale => sale[2]);
+        
+        salesTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.reverse(),
+                datasets: [{
+                    label: 'Daily Revenue',
+                    data: revenues.reverse(),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(0);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function setDateRange(period) {
+        const today = new Date();
+        const startDate = document.getElementById('start_date');
+        const endDate = document.getElementById('end_date');
+        
+        endDate.value = today.toISOString().split('T')[0];
+        
+        switch(period) {
+            case 'today':
+                startDate.value = today.toISOString().split('T')[0];
+                break;
+            case 'week':
+                const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                startDate.value = weekAgo.toISOString().split('T')[0];
+                break;
+            case 'month':
+                const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                startDate.value = monthAgo.toISOString().split('T')[0];
+                break;
+        }
+    }
+    
+    function exportReport() {
+        alert('Export functionality would be implemented here.\n\nWould export:\n- Sales data\n- Inventory levels\n- Profit analysis\n- Charts and graphs');
+    }
+    
+    function reorderProduct(productId) {
+        alert(`Reorder functionality would be implemented here.\n\nWould:\n- Create purchase order\n- Contact supplier\n- Set reorder quantity\n- Track delivery`);
+    }
+    
+    function generateInventoryReport() {
+        alert('Inventory Report would include:\n- Current stock levels\n- Stock movements\n- Valuation\n- Aging analysis');
+    }
+    
+    function generateSalesReport() {
+        alert('Sales Report would include:\n- Sales by period\n- Top customers\n- Product performance\n- Payment methods');
+    }
+    
+    function generateProfitReport() {
+        alert('Profit Analysis would include:\n- Gross profit margins\n- Product profitability\n- Cost analysis\n- ROI calculations');
+    }
+    
+    function scheduleReport() {
+        alert('Schedule Report would allow:\n- Daily/Weekly/Monthly reports\n- Email delivery\n- Custom recipients\n- Report templates');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-tachometer-alt text-primary"></i> Dashboard Overview
+        </h1>
+        <p class="text-muted">Welcome to your inventory management system</p>
+    </div>
+    <div>
+        <span class="badge bg-success fs-6">
+            <i class="fas fa-circle"></i> System Online
+        </span>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <div class="stat-number">{{ stats.total_products or 0 }}</div>
+            <div class="stat-label">Total Products</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-number">{{ stats.low_stock_count or 0 }}</div>
+            <div class="stat-label">Low Stock Items</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger">
+            <div class="stat-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stat-number">{{ stats.out_of_stock_count or 0 }}</div>
+            <div class="stat-label">Out of Stock</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-number">{{ stats.inventory_value|currency }}</div>
+            <div class="stat-label">Inventory Value</div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-shopping-cart fa-2x"></i>
+                </div>
+                <h4 class="text-primary">{{ stats.today_sales_count or 0 }}</h4>
+                <p class="text-muted mb-0">Today's Sales</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                </div>
+                <h4 class="text-success">{{ stats.today_sales_amount|currency }}</h4>
+                <p class="text-muted mb-0">Today's Revenue</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <h4 class="text-info">{{ stats.month_sales_count or 0 }}</h4>
+                <p class="text-muted mb-0">This Month's Sales</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-coins fa-2x"></i>
+                </div>
+                <h4 class="text-warning">{{ stats.month_sales_amount|currency }}</h4>
+                <p class="text-muted mb-0">Monthly Revenue</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Alerts -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell text-warning"></i> Recent Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if alerts %}
+                    <div class="list-group list-group-flush">
+                        {% for alert in alerts %}
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        {% if alert.alert_type == 'OUT_OF_STOCK' %}
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        {% elif alert.alert_type == 'LOW_STOCK' %}
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        {% else %}
+                                            <i class="fas fa-info-circle text-info"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ alert.product_name }}</h6>
+                                        <p class="mb-1 text-muted small">{{ alert.message }}</p>
+                                        <small class="text-muted">{{ alert.created_date }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('alerts') }}" class="btn btn-outline-primary btn-sm">
+                            View All Alerts
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <h6 class="text-muted">No alerts</h6>
+                        <p class="text-muted small">Everything looks good!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt text-primary"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{{ url_for('add_product') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus"></i><br>
+                            <small>Add Product</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('new_sale') }}" class="btn btn-success w-100">
+                            <i class="fas fa-shopping-cart"></i><br>
+                            <small>New Sale</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('reports') }}" class="btn btn-info w-100">
+                            <i class="fas fa-chart-bar"></i><br>
+                            <small>View Reports</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('products') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-boxes"></i><br>
+                            <small>Manage Stock</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server text-success"></i> System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-database fa-2x text-success mb-2"></i>
+                            <h6>Database</h6>
+                            <span class="badge bg-success">Online</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-sync fa-2x text-success mb-2"></i>
+                            <h6>Auto-Sync</h6>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-bell fa-2x text-success mb-2"></i>
+                            <h6>Alerts</h6>
+                            <span class="badge bg-success">Monitoring</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                            <h6>Security</h6>
+                            <span class="badge bg-success">Protected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh dashboard stats every 60 seconds
+    setInterval(function() {
+        fetch('/api/dashboard_stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update stat cards with animation
+                updateStatCard('total_products', data.total_products || 0);
+                updateStatCard('low_stock_count', data.low_stock_count || 0);
+                updateStatCard('out_of_stock_count', data.out_of_stock_count || 0);
+                updateStatCard('inventory_value', '$' + (data.inventory_value || 0).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                updateStatCard('today_sales_count', data.today_sales_count || 0);
+                updateStatCard('today_sales_amount', '$' + (data.today_sales_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                updateStatCard('month_sales_count', data.month_sales_count || 0);
+                updateStatCard('month_sales_amount', '$' + (data.month_sales_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2}));
+            })
+            .catch(error => console.error('Error refreshing dashboard:', error));
+    }, 60000);
+    
+    function updateStatCard(type, value) {
+        const elements = document.querySelectorAll('.stat-number');
+        elements.forEach(element => {
+            const card = element.closest('.stat-card');
+            if (card && card.textContent.toLowerCase().includes(type.replace('_', ' '))) {
+                element.style.transform = 'scale(1.1)';
+                element.textContent = value;
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+    }
+</script>
+{% endblock %}

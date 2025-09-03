@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-shopping-cart text-primary"></i> Sales Management
+        </h1>
+        <p class="text-muted">Track and manage your sales transactions</p>
+    </div>
+    <div>
+        <a href="{{ url_for('new_sale') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> New Sale
+        </a>
+    </div>
+</div>
+
+<!-- Sales Summary Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-shopping-cart fa-2x"></i>
+                </div>
+                <h4 class="text-primary">{{ report.summary.total_sales or 0 }}</h4>
+                <p class="text-muted mb-0">Total Sales</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-dollar-sign fa-2x"></i>
+                </div>
+                <h4 class="text-success">{{ report.summary.total_revenue|currency }}</h4>
+                <p class="text-muted mb-0">Total Revenue</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <h4 class="text-info">{{ report.summary.avg_sale_amount|currency }}</h4>
+                <p class="text-muted mb-0">Average Sale</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-percentage fa-2x"></i>
+                </div>
+                <h4 class="text-warning">{{ report.summary.total_discounts|currency }}</h4>
+                <p class="text-muted mb-0">Total Discounts</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Daily Sales Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-area"></i> Daily Sales Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailySalesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-trophy"></i> Top Selling Products
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if report.top_products %}
+                    <div class="list-group list-group-flush">
+                        {% for product in report.top_products[:5] %}
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ product[0] }}</h6>
+                                        <small class="text-muted">{{ product[1] }} units sold</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong class="text-success">{{ product[2]|currency }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar text-muted fa-3x mb-3"></i>
+                        <h6 class="text-muted">No sales data</h6>
+                        <p class="text-muted small">Start making sales to see top products</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sales -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Recent Sales
+                </h5>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshSales()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if report.daily_sales %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Sales Count</th>
+                                    <th>Revenue</th>
+                                    <th>Avg. Sale</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in report.daily_sales %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                                    <i class="fas fa-calendar-day"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ sale[0] }}</h6>
+                                                <small class="text-muted">{{ sale[0] | strftime('%A') }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ sale[1] }} sales</span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">{{ sale[2]|currency }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ (sale[2] / sale[1])|currency if sale[1] > 0 else '$0.00' }}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewDailySales('{{ sale[0] }}')">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-cart text-muted fa-4x mb-3"></i>
+                        <h5 class="text-muted">No sales recorded yet</h5>
+                        <p class="text-muted">Start by creating your first sale transaction</p>
+                        <a href="{{ url_for('new_sale') }}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Create First Sale
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('new_sale') }}" class="btn btn-success w-100">
+                            <i class="fas fa-plus mb-2"></i><br>
+                            New Sale
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('reports') }}" class="btn btn-info w-100">
+                            <i class="fas fa-chart-bar mb-2"></i><br>
+                            Sales Report
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" onclick="exportSales()">
+                            <i class="fas fa-download mb-2"></i><br>
+                            Export Data
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="printReport()">
+                            <i class="fas fa-print mb-2"></i><br>
+                            Print Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let dailySalesChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeDailySalesChart();
+    });
+    
+    function initializeDailySalesChart() {
+        const ctx = document.getElementById('dailySalesChart').getContext('2d');
+        
+        // Prepare data from the report
+        const dailySalesData = {{ report.daily_sales | tojson }};
+        const labels = dailySalesData.map(sale => sale[0]);
+        const revenues = dailySalesData.map(sale => sale[2]);
+        const salesCounts = dailySalesData.map(sale => sale[1]);
+        
+        dailySalesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.reverse(), // Show oldest to newest
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: revenues.reverse(),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Sales Count',
+                    data: salesCounts.reverse(),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    return 'Revenue: $' + context.parsed.y.toFixed(2);
+                                } else {
+                                    return 'Sales: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Revenue ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(0);
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Sales Count'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    }
+    
+    function refreshSales() {
+        location.reload();
+    }
+    
+    function viewDailySales(date) {
+        // In a full implementation, this would show detailed sales for the specific date
+        alert(`Viewing sales details for ${date}\n\nThis feature would show:\n- Individual transactions\n- Products sold\n- Customer information\n- Payment methods`);
+    }
+    
+    function exportSales() {
+        // In a full implementation, this would export sales data to CSV/Excel
+        alert('Export functionality would be implemented here.\n\nWould export:\n- Sales transactions\n- Product details\n- Customer information\n- Date ranges');
+    }
+    
+    function printReport() {
+        // Simple print functionality
+        window.print();
+    }
+    
+    // Auto-refresh sales data every 5 minutes
+    setInterval(function() {
+        // In a production app, you might want to refresh only the data without full page reload
+        console.log('Auto-refreshing sales data...');
+    }, 300000); // 5 minutes
+</script>
+{% endblock %}

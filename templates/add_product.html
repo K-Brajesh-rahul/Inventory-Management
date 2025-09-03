@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-plus text-primary"></i> Add New Product
+        </h1>
+        <p class="text-muted">Add a new product to your inventory</p>
+    </div>
+    <div>
+        <a href="{{ url_for('products') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Product Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="productForm">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-tag"></i> Basic Information
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="form-text">Enter the full product name</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="sku" class="form-label">SKU <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="sku" name="sku" required>
+                                <div class="form-text">Unique product identifier</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                <div class="form-text">Optional product description</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="category_id" class="form-label">Category</label>
+                                <select class="form-select" id="category_id" name="category_id">
+                                    <option value="">Select Category</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="supplier_id" class="form-label">Supplier</label>
+                                <select class="form-select" id="supplier_id" name="supplier_id">
+                                    <option value="">Select Supplier</option>
+                                    {% for supplier in suppliers %}
+                                        <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Stock & Pricing -->
+                        <div class="col-md-6">
+                            <h6 class="text-success mb-3">
+                                <i class="fas fa-dollar-sign"></i> Pricing & Stock
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="unit_price" class="form-label">Unit Price ($)</label>
+                                        <input type="number" class="form-control" id="unit_price" name="unit_price" step="0.01" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="cost_price" class="form-label">Cost Price ($)</label>
+                                        <input type="number" class="form-control" id="cost_price" name="cost_price" step="0.01" min="0" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="current_stock" class="form-label">Current Stock</label>
+                                        <input type="number" class="form-control" id="current_stock" name="current_stock" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="minimum_stock" class="form-label">Minimum Stock</label>
+                                        <input type="number" class="form-control" id="minimum_stock" name="minimum_stock" min="0" value="10">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="maximum_stock" class="form-label">Maximum Stock</label>
+                                        <input type="number" class="form-control" id="maximum_stock" name="maximum_stock" min="0" value="1000">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="reorder_point" class="form-label">Reorder Point</label>
+                                        <input type="number" class="form-control" id="reorder_point" name="reorder_point" min="0" value="20">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Storage Location</label>
+                                <input type="text" class="form-control" id="location" name="location" placeholder="e.g., A1-B2">
+                                <div class="form-text">Warehouse location or shelf number</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="barcode" class="form-label">Barcode</label>
+                                <input type="text" class="form-control" id="barcode" name="barcode">
+                                <div class="form-text">Product barcode if available</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Profit Margin Display -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-calculator"></i> Profit Analysis
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Profit per Unit:</strong>
+                                        <span id="profitPerUnit">$0.00</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Profit Margin:</strong>
+                                        <span id="profitMargin">0%</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Total Stock Value:</strong>
+                                        <span id="stockValue">$0.00</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Potential Revenue:</strong>
+                                        <span id="potentialRevenue">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo"></i> Reset Form
+                                </button>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary me-2" onclick="previewProduct()">
+                                        <i class="fas fa-eye"></i> Preview
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save"></i> Save Product
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Product Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <!-- Preview content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="submitForm()">
+                    <i class="fas fa-save"></i> Save Product
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let previewModal;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        
+        // Add event listeners for real-time calculations
+        const priceInputs = ['unit_price', 'cost_price', 'current_stock'];
+        priceInputs.forEach(inputId => {
+            document.getElementById(inputId).addEventListener('input', calculateProfitAnalysis);
+        });
+        
+        // Initial calculation
+        calculateProfitAnalysis();
+        
+        // Form validation
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            if (!validateForm()) {
+                e.preventDefault();
+            }
+        });
+        
+        // Auto-generate SKU based on product name
+        document.getElementById('name').addEventListener('input', function() {
+            const name = this.value.trim();
+            if (name && !document.getElementById('sku').value) {
+                const sku = generateSKU(name);
+                document.getElementById('sku').value = sku;
+            }
+        });
+    });
+    
+    function calculateProfitAnalysis() {
+        const unitPrice = parseFloat(document.getElementById('unit_price').value) || 0;
+        const costPrice = parseFloat(document.getElementById('cost_price').value) || 0;
+        const currentStock = parseInt(document.getElementById('current_stock').value) || 0;
+        
+        const profitPerUnit = unitPrice - costPrice;
+        const profitMargin = unitPrice > 0 ? ((profitPerUnit / unitPrice) * 100) : 0;
+        const stockValue = costPrice * currentStock;
+        const potentialRevenue = unitPrice * currentStock;
+        
+        document.getElementById('profitPerUnit').textContent = `$${profitPerUnit.toFixed(2)}`;
+        document.getElementById('profitMargin').textContent = `${profitMargin.toFixed(1)}%`;
+        document.getElementById('stockValue').textContent = `$${stockValue.toFixed(2)}`;
+        document.getElementById('potentialRevenue').textContent = `$${potentialRevenue.toFixed(2)}`;
+        
+        // Color code profit margin
+        const marginElement = document.getElementById('profitMargin');
+        if (profitMargin < 10) {
+            marginElement.className = 'text-danger';
+        } else if (profitMargin < 25) {
+            marginElement.className = 'text-warning';
+        } else {
+            marginElement.className = 'text-success';
+        }
+    }
+    
+    function generateSKU(name) {
+        // Simple SKU generation: first 3 letters + random number
+        const prefix = name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+        const suffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `${prefix}-${suffix}`;
+    }
+    
+    function validateForm() {
+        const requiredFields = ['name', 'sku'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Validate stock levels
+        const currentStock = parseInt(document.getElementById('current_stock').value) || 0;
+        const minStock = parseInt(document.getElementById('minimum_stock').value) || 0;
+        const maxStock = parseInt(document.getElementById('maximum_stock').value) || 0;
+        const reorderPoint = parseInt(document.getElementById('reorder_point').value) || 0;
+        
+        if (minStock >= maxStock) {
+            alert('Maximum stock must be greater than minimum stock');
+            isValid = false;
+        }
+        
+        if (reorderPoint < minStock) {
+            alert('Reorder point should be at least equal to minimum stock');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
+    function resetForm() {
+        if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+            document.getElementById('productForm').reset();
+            document.getElementById('minimum_stock').value = '10';
+            document.getElementById('maximum_stock').value = '1000';
+            document.getElementById('reorder_point').value = '20';
+            calculateProfitAnalysis();
+        }
+    }
+    
+    function previewProduct() {
+        const formData = new FormData(document.getElementById('productForm'));
+        const data = Object.fromEntries(formData.entries());
+        
+        // Get selected category and supplier names
+        const categorySelect = document.getElementById('category_id');
+        const supplierSelect = document.getElementById('supplier_id');
+        const categoryName = categorySelect.options[categorySelect.selectedIndex]?.text || 'N/A';
+        const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.text || 'N/A';
+        
+        const unitPrice = parseFloat(data.unit_price) || 0;
+        const costPrice = parseFloat(data.cost_price) || 0;
+        const currentStock = parseInt(data.current_stock) || 0;
+        const profitPerUnit = unitPrice - costPrice;
+        const profitMargin = unitPrice > 0 ? ((profitPerUnit / unitPrice) * 100) : 0;
+        
+        const previewContent = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Basic Information</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Name:</strong></td><td>${data.name || 'N/A'}</td></tr>
+                        <tr><td><strong>SKU:</strong></td><td><code>${data.sku || 'N/A'}</code></td></tr>
+                        <tr><td><strong>Category:</strong></td><td>${categoryName}</td></tr>
+                        <tr><td><strong>Supplier:</strong></td><td>${supplierName}</td></tr>
+                        <tr><td><strong>Location:</strong></td><td>${data.location || 'N/A'}</td></tr>
+                        <tr><td><strong>Barcode:</strong></td><td>${data.barcode || 'N/A'}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-success">Stock & Pricing</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Unit Price:</strong></td><td>$${unitPrice.toFixed(2)}</td></tr>
+                        <tr><td><strong>Cost Price:</strong></td><td>$${costPrice.toFixed(2)}</td></tr>
+                        <tr><td><strong>Profit per Unit:</strong></td><td class="${profitPerUnit >= 0 ? 'text-success' : 'text-danger'}">$${profitPerUnit.toFixed(2)}</td></tr>
+                        <tr><td><strong>Profit Margin:</strong></td><td class="${profitMargin >= 25 ? 'text-success' : profitMargin >= 10 ? 'text-warning' : 'text-danger'}">${profitMargin.toFixed(1)}%</td></tr>
+                        <tr><td><strong>Current Stock:</strong></td><td>${currentStock}</td></tr>
+                        <tr><td><strong>Stock Levels:</strong></td><td>Min: ${data.minimum_stock}, Max: ${data.maximum_stock}, Reorder: ${data.reorder_point}</td></tr>
+                    </table>
+                </div>
+            </div>
+            ${data.description ? `
+                <div class="mt-3">
+                    <h6>Description</h6>
+                    <p class="text-muted">${data.description}</p>
+                </div>
+            ` : ''}
+        `;
+        
+        document.getElementById('previewContent').innerHTML = previewContent;
+        previewModal.show();
+    }
+    
+    function submitForm() {
+        previewModal.hide();
+        document.getElementById('productForm').submit();
+    }
+</script>
+{% endblock %}

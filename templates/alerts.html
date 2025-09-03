@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-exclamation-triangle text-warning"></i> System Alerts
+        </h1>
+        <p class="text-muted">Monitor inventory alerts and notifications</p>
+    </div>
+    <div>
+        <button class="btn btn-outline-success" onclick="markAllRead()">
+            <i class="fas fa-check-double"></i> Mark All Read
+        </button>
+    </div>
+</div>
+
+{% if alerts %}
+    <div class="row">
+        {% for alert in alerts %}
+            <div class="col-lg-6 mb-4">
+                <div class="card alert-card" data-alert-id="{{ alert.id }}">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                {% if alert.alert_type == 'OUT_OF_STOCK' %}
+                                    <div class="alert-icon bg-danger">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                {% elif alert.alert_type == 'LOW_STOCK' %}
+                                    <div class="alert-icon bg-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                {% elif alert.alert_type == 'OVERSTOCK' %}
+                                    <div class="alert-icon bg-info">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="alert-icon bg-secondary">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ alert.product_name }}</h6>
+                                    <small class="text-muted">{{ alert.created_date }}</small>
+                                </div>
+                                <p class="mb-2">{{ alert.message }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-light text-dark">SKU: {{ alert.sku }}</span>
+                                        {% if alert.alert_type == 'OUT_OF_STOCK' %}
+                                            <span class="badge bg-danger">Critical</span>
+                                        {% elif alert.alert_type == 'LOW_STOCK' %}
+                                            <span class="badge bg-warning">Low Stock</span>
+                                        {% elif alert.alert_type == 'OVERSTOCK' %}
+                                            <span class="badge bg-info">Overstock</span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary me-2" onclick="viewProduct({{ alert.product_id }})">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="markAsRead({{ alert.id }})">
+                                            <i class="fas fa-check"></i> Mark Read
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h4 class="text-success">All Clear!</h4>
+                    <p class="text-muted">No alerts at this time. Your inventory is running smoothly.</p>
+                    <a href="{{ url_for('products') }}" class="btn btn-primary">
+                        <i class="fas fa-boxes"></i> View Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Alert Statistics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Alert Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                            <h4 class="text-danger">{{ alerts|selectattr('alert_type', 'equalto', 'OUT_OF_STOCK')|list|length }}</h4>
+                            <p class="text-muted mb-0">Out of Stock</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                            <h4 class="text-warning">{{ alerts|selectattr('alert_type', 'equalto', 'LOW_STOCK')|list|length }}</h4>
+                            <p class="text-muted mb-0">Low Stock</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-info-circle fa-2x text-info mb-2"></i>
+                            <h4 class="text-info">{{ alerts|selectattr('alert_type', 'equalto', 'OVERSTOCK')|list|length }}</h4>
+                            <p class="text-muted mb-0">Overstock</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-bell fa-2x text-primary mb-2"></i>
+                            <h4 class="text-primary">{{ alerts|length }}</h4>
+                            <p class="text-muted mb-0">Total Alerts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-left: 4px solid #dee2e6;
+    }
+    
+    .alert-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .alert-card[data-alert-type="OUT_OF_STOCK"] {
+        border-left-color: #dc3545;
+    }
+    
+    .alert-card[data-alert-type="LOW_STOCK"] {
+        border-left-color: #ffc107;
+    }
+    
+    .alert-card[data-alert-type="OVERSTOCK"] {
+        border-left-color: #17a2b8;
+    }
+    
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .alert-card.read {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function markAsRead(alertId) {
+        fetch(`/alerts/${alertId}/mark_read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const alertCard = document.querySelector(`[data-alert-id="${alertId}"]`);
+                alertCard.classList.add('read');
+                
+                // Update the button
+                const button = alertCard.querySelector('button[onclick*="markAsRead"]');
+                button.innerHTML = '<i class="fas fa-check"></i> Read';
+                button.classList.remove('btn-outline-success');
+                button.classList.add('btn-success');
+                button.disabled = true;
+                
+                // Update alert badge in navbar
+                updateAlertBadge();
+                
+                // Show success message
+                showToast('Alert marked as read', 'success');
+            } else {
+                showToast('Error marking alert as read', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error marking alert as read', 'error');
+        });
+    }
+    
+    function markAllRead() {
+        const unreadAlerts = document.querySelectorAll('.alert-card:not(.read)');
+        
+        if (unreadAlerts.length === 0) {
+            showToast('No unread alerts to mark', 'info');
+            return;
+        }
+        
+        if (!confirm(`Mark all ${unreadAlerts.length} alerts as read?`)) {
+            return;
+        }
+        
+        const promises = [];
+        unreadAlerts.forEach(alertCard => {
+            const alertId = alertCard.dataset.alertId;
+            promises.push(
+                fetch(`/alerts/${alertId}/mark_read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+            );
+        });
+        
+        Promise.all(promises)
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(results => {
+                const successCount = results.filter(r => r.success).length;
+                
+                if (successCount === unreadAlerts.length) {
+                    unreadAlerts.forEach(alertCard => {
+                        alertCard.classList.add('read');
+                        const button = alertCard.querySelector('button[onclick*="markAsRead"]');
+                        button.innerHTML = '<i class="fas fa-check"></i> Read';
+                        button.classList.remove('btn-outline-success');
+                        button.classList.add('btn-success');
+                        button.disabled = true;
+                    });
+                    
+                    updateAlertBadge();
+                    showToast(`${successCount} alerts marked as read`, 'success');
+                } else {
+                    showToast(`${successCount} of ${unreadAlerts.length} alerts marked as read`, 'warning');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error marking alerts as read', 'error');
+            });
+    }
+    
+    function viewProduct(productId) {
+        // Redirect to products page with the specific product highlighted
+        window.location.href = `/products#product-${productId}`;
+    }
+    
+    function showToast(message, type) {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+    
+    function updateAlertBadge() {
+        // This function is defined in base.html
+        if (typeof updateAlertBadge !== 'undefined') {
+            updateAlertBadge();
+        }
+    }
+</script>
+{% endblock %}

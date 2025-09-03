@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-truck text-primary"></i> Suppliers Management
+        </h1>
+        <p class="text-muted">Manage your supplier relationships</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+            <i class="fas fa-plus"></i> Add Supplier
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    {% for supplier in suppliers %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-building"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="card-title">{{ supplier.name }}</h5>
+                            
+                            {% if supplier.contact_person %}
+                                <p class="mb-1">
+                                    <i class="fas fa-user text-muted me-2"></i>
+                                    {{ supplier.contact_person }}
+                                </p>
+                            {% endif %}
+                            
+                            {% if supplier.email %}
+                                <p class="mb-1">
+                                    <i class="fas fa-envelope text-muted me-2"></i>
+                                    <a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a>
+                                </p>
+                            {% endif %}
+                            
+                            {% if supplier.phone %}
+                                <p class="mb-1">
+                                    <i class="fas fa-phone text-muted me-2"></i>
+                                    <a href="tel:{{ supplier.phone }}">{{ supplier.phone }}</a>
+                                </p>
+                            {% endif %}
+                            
+                            {% if supplier.address %}
+                                <p class="mb-3">
+                                    <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                    {{ supplier.address }}
+                                </p>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Added: {{ supplier.created_date }}</small>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-info" onclick="viewSupplier({{ supplier.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editSupplier({{ supplier.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSupplier({{ supplier.id }}, '{{ supplier.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    
+    {% if not suppliers %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-truck text-muted fa-4x mb-3"></i>
+                    <h4 class="text-muted">No Suppliers Yet</h4>
+                    <p class="text-muted">Add your first supplier to start managing relationships</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                        <i class="fas fa-plus"></i> Add First Supplier
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Supplier Modal -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Supplier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_supplier') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Company Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="contact_person" class="form-label">Contact Person</label>
+                                <input type="text" class="form-control" id="contact_person" name="contact_person">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function viewSupplier(id) {
+        alert(`View Supplier functionality would be implemented here.\n\nWould show:\n- Complete supplier details\n- Products from this supplier\n- Purchase history\n- Performance metrics`);
+    }
+    
+    function editSupplier(id) {
+        alert(`Edit Supplier functionality would be implemented here.\n\nWould allow editing:\n- Company information\n- Contact details\n- Address\n- Notes`);
+    }
+    
+    function deleteSupplier(id, name) {
+        if (confirm(`Are you sure you want to delete the supplier "${name}"?\n\nThis action cannot be undone and may affect related products.`)) {
+            alert('Delete functionality would be implemented here.');
+        }
+    }
+</script>
+{% endblock %}
