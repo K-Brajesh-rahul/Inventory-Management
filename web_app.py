@@ -39,6 +39,31 @@ def get_stock_status(current_stock, minimum_stock, reorder_point):
 # Template filters
 app.jinja_env.filters['currency'] = format_currency
 
+# Add a robust strftime filter for Jinja2 templates
+from datetime import datetime
+def jinja_strftime(value, fmt='%Y-%m-%d'):
+    """Format date/datetime or ISO date string with the given format.
+    Falls back to the original value on error.
+    """
+    try:
+        # If already a datetime/date object
+        try:
+            return value.strftime(fmt)
+        except Exception:
+            pass
+        # Try parse ISO-like strings first
+        s = str(value)
+        try:
+            dt = datetime.fromisoformat(s)
+        except Exception:
+            # Fallback common pattern
+            dt = datetime.strptime(s, '%Y-%m-%d')
+        return dt.strftime(fmt)
+    except Exception:
+        return str(value)
+
+app.jinja_env.filters['strftime'] = jinja_strftime
+
 # Routes
 @app.route('/')
 def index():
